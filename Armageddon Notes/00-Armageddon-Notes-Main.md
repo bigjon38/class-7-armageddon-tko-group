@@ -12,12 +12,6 @@ status:
 disabled rules:
 ---
 
-## Configuration
-
-- [Linter Rules](https://chatgpt.com/g/g-68a60a81793c8191b6d623be5cf6efec-chicken-scratch/c/Linter-Rules.md)
-- [Disabling Linter Rules](https://chatgpt.com/g/g-68a60a81793c8191b6d623be5cf6efec-chicken-scratch/c/Obsidian-Linter-Disabling-Rules)
-- [Markdown Cheatsheet](https://chatgpt.com/g/g-68a60a81793c8191b6d623be5cf6efec-chicken-scratch/c/Markdown-Cheat-Sheet)
-
 ---
 
 # Architecture Notes Index
