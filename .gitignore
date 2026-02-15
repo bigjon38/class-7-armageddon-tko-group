@@ -35,11 +35,11 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
-*.pem
-*.key
-*.ppk
-*.env
-*secret*
-*token*
-*credentials*
 
+# macOS
+.DS_Store
+
+# macOS
+.DS_Store
+.DS_Store
+.DS_Store
