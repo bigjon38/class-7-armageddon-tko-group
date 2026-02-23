@@ -1,0 +1,290 @@
+2/21/2026 - 
+Lab 2 Journey — Kamau's Progress Report
+What Lab 2 Is Trying to Accomplish
+You are building a CloudFront origin cloaking architecture. The goal is to make CloudFront the only way to reach your application. Before Lab 2, anyone who found your ALB's address could hit it directly. After Lab 2, the ALB will reject all traffic that doesn't come through CloudFront.
+Target architecture:
+Internet → CloudFront (WAF here) → ALB (locked) → EC2 → RDS
+Tools and Apps Used
+Tool
+Purpose
+VS Code
+Editing Terraform files
+Terminal (zsh)
+Running Terraform and AWS CLI commands
+AWS Console (browser)
+ACM certificates, visual verification
+GitHub
+Version control, saving your work
+Namecheap
+Domain registrar — updating nameservers
+
+Folders and Files Involved
+Your project lives at:
+/Users/kamau/lab-1c-Kamau/kamau/Lab2/
+New files you created for Lab 2:
+lab2_cloudfront_origin_cloaking.tf — locks ALB to CloudFront IPs only, secret header rules
+lab2_cloudfront_alb.tf — the CloudFront distribution itself
+lab2_cloudfront_r53.tf — Route53 DNS records pointing to CloudFront
+lab2_cloudfront_shield_waf.tf — WAF moved to CloudFront edge
+lab2_cloudfront_cache_policies.tf — caching rules for static vs dynamic content
+.gitignore — protects secrets from being committed to GitHub
+Existing files you modified:
+variables.tf — added 3 new variables: domain_name, app_subdomain, cloudfront_acm_cert_arn
+versions.tf — added random provider
+providers.tf — added us_east_1 provider alias (required for CloudFront WAF)
+terraform.tfvars — added certificate ARN, domain name, fixed AMI ID, fixed RDS instance class
+bonus_b_alb.tf — fixed broken references, hardcoded correct subnet and VPC IDs
+bonus_b_outputs.tf — removed references to resources that don't exist
+bonus_a_variables.tf — removed accidentally pasted content
+bonus_a_security_groups.tf — fixed circular dependency between security groups
+bonus_a_outputs.tf — commented out references to non-existent resources
+main.tf — added overwrite = true to SSM parameters, fixed public_ip attribute
+Files you disabled (renamed to .disabled):
+bonus_a_vpc_endpoints.tf — had placeholder your_vpc_id values
+bonus_a_ec2_private.tf — referenced non-existent IAM resources
+bonus_b_waf.tf — had invalid WAF rule configuration
+bonus_b_lambda_role.tf — IAM roles already existed in AWS
+bonus_b_logging.tf — S3 bucket already existed in AWS
+bonus_b_alb_security_groups.tf — had placeholder VPC ID
+bonus_b_monitoring.tf — referenced disabled ALB resource
+bonus_b_route53.tf — referenced disabled ALB resource
+Completed Tasks in Order
+1. Git setup
+Restored accidentally deleted file Lab 1a study Armageddon.md
+Created .gitignore to protect terraform.tfvars (which contains your DB password) from being committed to GitHub
+2. ACM Certificate
+Discovered existing certificate had FAILED status and only covered one domain
+Requested a new certificate covering both kamaus-labs.online and app.kamaus-labs.online
+Created DNS validation records in Route53
+Later discovered the domain's nameservers were pointing to Namecheap instead of Route53 — this was why validation was stuck
+Updated nameservers at Namecheap to Route53's 4 nameservers
+Certificate eventually reached ISSUED status ✓
+3. Terraform file creation
+Created all 5 new Lab 2 Terraform files
+Added provider alias for us-east-1 (required because CloudFront WAF must live in us-east-1)
+Added missing variables to variables.tf
+Added random provider to versions.tf
+4. Fixing pre-existing Lab errors
+Fixed circular security group dependency in bonus_a_security_groups.tf
+Fixed outdated AMI ID (ami-0c55b159cbfafe1f0 → ami-0199fa5fada510433)
+Fixed RDS instance class (db.t2.micro → db.t3.micro — old class incompatible with MySQL 8.4)
+Fixed WAF description containing an em dash – character that AWS rejected
+Commented out broken outputs referencing non-existent resources
+Disabled 8 bonus files that had placeholder values or referenced non-existent resources
+5. Terraform state imports
+Imported existing ALB (kamaus-alb01) into Terraform state
+Imported existing target group (kamaus-tg01) into Terraform state
+Imported existing ALB security group (sg-0ae34b45939bfc684) into Terraform state
+6. VPC mismatch discovery
+Discovered you have 5 VPCs in your AWS account from different labs
+Your EC2 instance lives in kamau-lab-vpc01 (vpc-0190e526ebad115f5)
+Your ALB was being configured against chewbacca-vpc01 (vpc-043702c90c6208922)
+Fixed target group to use the correct VPC matching the EC2 instance
+Errors You Encountered and What Caused Them
+Error
+Cause
+Fix
+Cycle: aws_security_group
+Two security groups referenced each other directly
+Moved cross-references to separate aws_security_group_rule resources
+InvalidAMIID.NotFound
+AMI ID was outdated
+Looked up current AMI, updated terraform.tfvars
+InvalidParameterCombination RDS
+db.t2.micro doesn't support MySQL 8.4
+Changed to db.t3.micro
+WAF ValidationException
+Em dash – in description field
+Replaced with regular hyphen -
+ParameterAlreadyExists SSM
+Lab 1 left parameters in AWS
+Added overwrite = true to SSM resources
+EntityAlreadyExists IAM roles
+Previous lab runs left roles in AWS
+Disabled the bonus files creating them
+InvalidVpcId.Malformed
+Placeholder text your_vpc_id in bonus files
+Disabled those files
+BucketAlreadyExists S3
+Previous lab created bucket
+Disabled the logging bonus file
+ALB InvalidConfigurationRequest security group
+New security group created in wrong VPC
+Switched to using existing security group via data source
+ALB InvalidConfigurationRequest subnets
+Subnet references pointed to wrong VPC
+Hardcoded correct subnet IDs from existing ALB
+Certificate PENDING_VALIDATION stuck
+Domain nameservers pointed to Namecheap, not Route53
+Updated nameservers at Namecheap
+UnsupportedCertificate on ALB
+Certificate was still pending when apply ran
+Waited for certificate to reach ISSUED status
+InvalidTarget target group
+EC2 and target group in different VPCs
+Fixed target group VPC ID to match EC2
+Route53 already exists
+Previous lab created app.kamaus-labs.online record
+Need to import it into Terraform state
+Target group ResourceInUse
+Old target group still attached to listener
+Need to resolve listener conflict
+
+Current Status — In Progress
+You are in the middle of terraform apply. The last two errors blocking completion are:
+Route53 record app.kamaus-labs.online already exists — needs to be imported into Terraform state
+Old target group can't be deleted — it's still attached to an ALB listener
+Next Steps to Complete Lab 2
+Import the existing Route53 record into state
+Resolve the listener/target group conflict
+Successfully run terraform apply to completion
+Verify CloudFront is working: curl -I https://kamaus-labs.online
+Verify direct ALB access is blocked: curl -I https://<ALB_DNS>
+Verify WAF is attached to CloudFront
+Verify DNS resolves to CloudFront IPs
+Commit all evidence to GitHub
+Key Concepts You Learned Along the Way
+Why CloudFront needs us-east-1: AWS requires all CloudFront-scoped WAFs and viewer certificates to live in us-east-1, regardless of where your app runs. This is a hard AWS requirement.
+Why we use a prefix list: CloudFront has hundreds of IP addresses that change constantly. AWS maintains a managed prefix list that updates automatically — far better than hardcoding IPs.
+Why the secret header matters: Even if someone routes traffic through a CloudFront IP address, they won't know the secret header value. It's a second layer of defense beyond the network-level IP lock.
+Why Terraform state imports matter: When resources already exist in AWS from previous runs, Terraform doesn't know about them. Importing tells Terraform "this thing already exists — manage it, don't recreate it."
+Why nameservers matter: Route53 can hold your DNS records all day, but if your domain registrar (Namecheap) is pointing to different nameservers, the world never sees those records. The registrar is the authority that tells the internet where to look.
+I completed Lab 2 by building a CloudFront distribution in front of my ALB, moving WAF to the edge, and locking the ALB to only accept traffic from CloudFront IPs plus a secret header. Along the way I encountered VPC mismatches from having 5 VPCs across different labs, a DNS misconfiguration where my domain was still pointing to Namecheap instead of Route53, an outdated AMI, an incompatible RDS instance class, and several bonus lab files with placeholder values that were never completed. I fixed each one systematically. The core Lab 2 architecture is in place and the apply is nearly complete.
+
+erraform state corrections and final conflict resolution
+Route53 record import
+Terraform apply failed because app.kamaus-labs.online already existed in AWS from a previous lab run. Terraform attempted to create it again and failed.
+
+Action taken:
+Identified hosted zone ID for kamaus-labs.online
+Ran terraform import for the existing Route53 record
+Verified the resource now appeared in terraform state list
+
+Result:
+Terraform now recognizes the DNS record as managed infrastructure instead of trying to recreate it.
+
+Target group listener conflict
+Terraform failed attempting to delete or replace a target group because it was still attached to an ALB listener.
+
+Root cause:
+Old target group remained attached to HTTPS listener from a previous configuration.
+
+Action taken:
+Inspected ALB listeners in AWS Console
+Identified which listener rule referenced the old target group
+Modified Terraform to align with the existing target group instead of forcing replacement
+Ensured only one target group was attached to the active listener
+
+Result:
+Listener conflict resolved. No more ResourceInUse error.
+
+Successful terraform apply
+After:
+• Route53 import
+• Listener alignment
+• VPC corrections
+• Security group fixes
+• Certificate validation
+• Bonus file cleanup
+
+terraform apply completed successfully without errors.
+
+Infrastructure status after apply:
+CloudFront distribution deployed
+WAF (CLOUDFRONT scope) attached to distribution
+ALB security group locked to CloudFront prefix list only
+Secret header rule enforced at ALB listener
+Route53 apex and app subdomain pointing to CloudFront
+
+Verification Phase (CLI-based validation)
+
+Verification 1 — Application reachable through CloudFront
+curl -I https://kamaus-labs.online
+
+Result:
+HTTP/2 200
+x-cache: Miss from cloudfront
+
+Meaning:
+Traffic is successfully flowing:
+Internet → CloudFront → ALB → EC2
+
+Verification 2 — Direct ALB access blocked
+curl -I --max-time 10 http://kamau-lab2-alb-68406169.us-east-1.elb.amazonaws.com
+
+Result:
+Connection timed out
+
+Meaning:
+ALB no longer accepts direct public traffic. Origin cloaking is functioning.
+
+Verification 3 — DNS resolves to CloudFront
+dig kamaus-labs.online A +short
+
+Result:
+Multiple 52.85.61.x IP addresses
+
+Meaning:
+Domain resolves to CloudFront edge network, not ALB.
+
+Verification 4 — WAF attached to CloudFront
+aws cloudfront get-distribution --id E39DJ4MHDX6X1A --query "Distribution.DistributionConfig.WebACLId" --output text
+
+Result:
+ARN of CloudFront-scoped WebACL returned
+
+Meaning:
+WAF enforcement moved to edge successfully.
+
+Evidence Collection
+Created evidence directory
+Captured:
+
+cloudfront-200.txt
+alb-blocked.txt
+dns-cloudfront.txt
+waf-attached.txt
+
+Purpose:
+Document proof of architecture state at completion.
+
+Version Control and GitHub
+Committed all Terraform files and evidence files
+Created GitHub repository: lab-2-kamau
+Renamed branch to main
+Pushed successfully
+
+Repository now contains:
+Full Terraform implementation
+Evidence files
+Clean project structure
+No exposed secrets (.gitignore protecting terraform.tfvars)
+
+Current State — Lab 2 Complete
+
+Architecture implemented:
+Internet
+→ CloudFront (WAF enforced at edge)
+→ ALB (restricted to CloudFront prefix list + secret header)
+→ EC2 (private app server)
+→ RDS
+
+Security posture achieved:
+Direct ALB access blocked
+DNS cannot bypass CloudFront
+WAF filtering happens before traffic reaches VPC
+Defense-in-depth via IP restriction + header validation
+Infrastructure reproducible via Terraform
+
+Operational lessons reinforced:
+Always verify VPC alignment before attaching resources
+Terraform imports are essential when legacy resources exist
+Listener and target group dependencies must be resolved before deletion
+CloudFront certificate region requirement (us-east-1) is absolute
+DNS authority begins at the registrar, not Route53
+
+Final Assessment
+
+Lab 2 evolved from a simple CloudFront front-end exercise into a full infrastructure debugging scenario involving state reconciliation, multi-VPC conflict resolution, DNS authority correction, resource import strategy, and layered security enforcement.
+
+The final architecture is stable, verified, version-controlled, and defensible.
