@@ -1,0 +1,31 @@
+{
+  "account": "533972479438",
+  "generated": "2026-02-23",
+  "residency": {
+    "tokyo_rds": [
+      {
+        "region": "ap-northeast-1",
+        "id": "terraform-20260222211311472000000002",
+        "az": "ap-northeast-1c",
+        "endpoint": "terraform-20260222211311472000000002.cd2wkuega9vu.ap-northeast-1.rds.amazonaws.com"
+      }
+    ],
+    "saopaulo_rds": [],
+    "assertion": "PASS"
+  },
+  "cloudfront": {
+    "ID": "E39DJ4MHDX6X1A",
+    "Domain": "d388ahor1i73v1.cloudfront.net",
+    "Status": "Deployed",
+    "WAF": "arn:aws:wafv2:us-east-1:533972479438:global/webacl/kamau-cf-waf/959a2c41-f54b-4cae-ade3-0b85dc752f7d"
+  },
+  "waf": {
+    "name": "kamau-cf-waf01",
+    "id": "bf100a60-6bc0-4248-9ec8-8768d6246aa6",
+    "scope": "CLOUDFRONT"
+  },
+  "tgw_peering": {
+    "id": "tgw-attach-057a73fac87faaf56",
+    "state": "available"
+  }
+}

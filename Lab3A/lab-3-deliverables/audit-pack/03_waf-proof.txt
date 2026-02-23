@@ -1,0 +1,32 @@
+WAF Proof - Lab 3B Audit Evidence
+===================================
+WAF is attached to CloudFront distribution: E39DJ4MHDX6X1A
+Domain: kamaus-labs.online
+
+WAF logs are stored in the instructor's shared class account (200819971986).
+The student account (533972479438) does not have access to the class
+CloudWatch Logs WAF log group.
+
+To generate WAF Allow/Block summary, run:
+  python3 malgus_waf_summary.py --log-group <class-waf-log-group>
+
+WAF CLI verification from student account:
+{
+    "NextMarker": "kamau-cf-waf01",
+    "WebACLs": [
+        {
+            "Name": "kamau-cf-waf",
+            "Id": "959a2c41-f54b-4cae-ade3-0b85dc752f7d",
+            "Description": "WAF for CloudFront distribution - Lab 2",
+            "LockToken": "06028855-b103-4109-add0-1c7a77fc74c7",
+            "ARN": "arn:aws:wafv2:us-east-1:533972479438:global/webacl/kamau-cf-waf/959a2c41-f54b-4cae-ade3-0b85dc752f7d"
+        },
+        {
+            "Name": "kamau-cf-waf01",
+            "Id": "bf100a60-6bc0-4248-9ec8-8768d6246aa6",
+            "Description": "WAF for CloudFront distribution - Lab 2",
+            "LockToken": "dcbd20f7-f0ef-4a1b-ad0b-96770e7c6d6a",
+            "ARN": "arn:aws:wafv2:us-east-1:533972479438:global/webacl/kamau-cf-waf01/bf100a60-6bc0-4248-9ec8-8768d6246aa6"
+        }
+    ]
+}

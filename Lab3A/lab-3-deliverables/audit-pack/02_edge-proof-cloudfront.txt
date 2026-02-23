@@ -1,0 +1,6 @@
+{
+    "ID": "E39DJ4MHDX6X1A",
+    "Domain": "d388ahor1i73v1.cloudfront.net",
+    "Status": "Deployed",
+    "WAF": "arn:aws:wafv2:us-east-1:533972479438:global/webacl/kamau-cf-waf/959a2c41-f54b-4cae-ade3-0b85dc752f7d"
+}
