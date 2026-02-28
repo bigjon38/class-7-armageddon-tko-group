@@ -1,0 +1,16 @@
+# Terraform
+*.tfstate
+*.tfstate.backup
+*.tfstate.*.backup
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+
+# Python virtual environment
+venv/
+
+# Mac
+.DS_Store
+
+# Junk files
+Tokyo TGW ID

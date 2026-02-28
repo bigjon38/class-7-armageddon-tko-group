@@ -1,0 +1,12 @@
+{
+  "tokyo_rds": [
+    {
+      "region": "ap-northeast-1",
+      "id": "terraform-20260222211311472000000002",
+      "az": "ap-northeast-1c",
+      "endpoint": "terraform-20260222211311472000000002.cd2wkuega9vu.ap-northeast-1.rds.amazonaws.com"
+    }
+  ],
+  "saopaulo_rds": [],
+  "assertion": "PASS"
+}

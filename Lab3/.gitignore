@@ -1,0 +1,12 @@
+# Terraform state files - never commit these
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Variable files containing secrets
+*.tfvars
+
+# OS files
+.DS_Store
+.DS_Store

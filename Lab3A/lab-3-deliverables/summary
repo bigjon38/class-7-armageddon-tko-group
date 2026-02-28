@@ -1,0 +1,234 @@
+LAB 3A - SESSION SUMMARY
+What You Did, What You Learned, What Comes Next
+Student: Kamau  |  Date: February 22, 2026  |  GitHub: jayekamau-1991
+
+1. What You Did Today — Step by Step
+This is the complete sequence of everything you accomplished in today's session, in the order it happened.
+
+Phase 1 - Environment Check
+Verified AWS CLI was authenticated to account 533972479438
+Confirmed Terraform v1.14.5 was installed on your Mac (darwin_arm64)
+Created the lab-3 folder structure in VS Code
+
+Phase 2 - Understanding the Lab
+Learned what APPI is and why Japanese patient data must stay in Japan
+Understood the separation of compute (Sao Paulo) and storage (Tokyo)
+Understood why Transit Gateway is used instead of VPC Peering
+Understood how two separate Terraform states coordinate in real DevOps teams
+
+Phase 3 - Built Tokyo (ap-northeast-1)
+Wrote tokyo/variables.tf - defined all input variables including db_password and saopaulo_tgw_id
+Wrote tokyo/outputs.tf - exports TGW ID, VPC ID, VPC CIDR, RDS endpoint, and peering attachment ID
+Wrote tokyo/main.tf - full infrastructure: VPC, subnets, IGW, NAT, route tables, SGs, RDS, TGW
+Ran terraform init in the tokyo folder
+Created terraform.tfvars to pass db_password securely
+Ran terraform apply with -target flags to deploy everything except the peering (Sao Paulo did not exist yet)
+Successfully deployed 20 resources in Tokyo
+Retrieved Tokyo TGW ID: tgw-0c2bb4583fe0d21f4
+
+Phase 4 - Built Sao Paulo (sa-east-1)
+Wrote saopaulo/variables.tf - defined region, VPC CIDR, and references to Tokyo values
+Wrote saopaulo/data.tf - reads Tokyo remote state so Sao Paulo can consume Tokyo outputs
+Wrote saopaulo/main.tf - VPC, subnets, IGW, NAT, route tables, SG, EC2 Launch Template, ASG, TGW
+Used targeted apply to deploy Sao Paulo TGW first
+Retrieved Sao Paulo TGW ID: tgw-0cb4636af59e74b95
+Updated Tokyo tfvars with Sao Paulo TGW ID and ran full Tokyo apply to create peering attachment
+Retrieved peering attachment ID: tgw-attach-06f592be2b934be1e
+Ran full Sao Paulo apply - deployed 19 resources including TGW peering accepter
+
+Phase 5 - Verified the Architecture
+Confirmed TGW peering status: available in both Tokyo and Sao Paulo
+Confirmed zero RDS instances in Sao Paulo - APPI compliant
+Confirmed RDS exists only in Tokyo
+
+Phase 6 - GitHub
+Created .gitignore to protect tfstate files, .terraform folders, and tfvars from being committed
+Initialized Git repo in lab-3 folder
+Staged and committed all 7 Terraform files
+Created kamau branch and pushed to personal repo: jayekamau-1991/class-7-armageddon-tko-group
+Pulled class repo to merge other students work (Lab1, Lab2 content)
+Pushed to class repo: jdpayne68/class-7-armageddon-tko-group on branch kamau
+Reorganized folder structure into Lab3/Lab3A/ and Lab3/Lab3B/ (ready for next part)
+Pushed final structure to both repos
+
+Phase 7 - Destroyed Infrastructure
+Destroyed Sao Paulo first (terraform destroy in saopaulo folder)
+Destroyed Tokyo second (terraform destroy in tokyo folder)
+AWS account is now clean - no ongoing charges
+
+1. Every Command You Ran Today
+These are all the Terminal commands from today in order. Read through them - they tell the story of the whole session.
+
+Environment checks
+aws sts get-caller-identity
+terraform -version
+ls /Users/kamau/DevOps/Class_7_ZION/Labs/Armageddon/lab-3
+
+Folder setup
+mkdir -p /Users/kamau/DevOps/Class_7_ZION/Labs/Armageddon/lab-3/tokyo
+mkdir -p /Users/kamau/DevOps/Class_7_ZION/Labs/Armageddon/lab-3/saopaulo
+touch tokyo/main.tf tokyo/variables.tf tokyo/outputs.tf
+touch saopaulo/main.tf saopaulo/variables.tf saopaulo/data.tf
+
+Tokyo deployment
+cd .../lab-3/tokyo
+terraform init
+echo 'db_password = "LabPass123!"' > terraform.tfvars
+terraform plan
+terraform apply -target=aws_vpc.shinjuku_vpc [+ 13 more targets]
+terraform state list
+terraform output tokyo_tgw_id
+
+Sao Paulo TGW deploy
+cd .../lab-3/saopaulo
+terraform init
+terraform apply -target=aws_ec2_transit_gateway.liberdade_tgw
+aws ec2 describe-transit-gateways --region sa-east-1 --output table
+
+Tokyo peering + full Sao Paulo deploy
+cd .../tokyo
+echo 'saopaulo_tgw_id = "tgw-0cb4636af59e74b95"' >> terraform.tfvars
+terraform apply
+terraform output tokyo_tgw_peering_attachment_id
+cd .../saopaulo && terraform apply
+
+Verification
+aws ec2 describe-transit-gateway-peering-attachments --region sa-east-1 --output table
+aws ec2 describe-transit-gateway-peering-attachments --region ap-northeast-1 --output table
+aws rds describe-db-instances --region sa-east-1 --query DBInstances[*].DBInstanceIdentifier
+aws rds describe-db-instances --region ap-northeast-1 --query DBInstances[*].DBInstanceIdentifier
+
+GitHub
+cat > .gitignore << 'EOF' ... EOF
+git init
+git add .
+git status
+git commit -m "Lab 3A complete..."
+git remote add origin <https://github.com/jayekamau-1991/class-7-armageddon-tko-group.git>
+git checkout -b kamau
+git push origin kamau
+git pull upstream kamau --allow-unrelated-histories --no-rebase
+git push upstream kamau
+
+Folder restructure
+mkdir Lab3A Lab3B
+mv tokyo Lab3A/ && mv saopaulo Lab3A/
+git add . && git commit -m "Lab3 restructure"
+git push origin kamau && git push upstream kamau
+
+Destroy
+cd .../Lab3A/saopaulo && terraform destroy
+cd .../Lab3A/tokyo && terraform destroy
+
+1. Errors You Hit and What You Learned
+
+Error
+Cause
+Fix
+Lesson
+Duplicate resource in outputs.tf
+Infrastructure code pasted into wrong file
+Deleted all content from outputs.tf, kept only output blocks
+All .tf files in a folder share one namespace
+TGW Peering - Invalid TGW ID
+Tokyo tried to peer with Sao Paulo TGW before it existed
+Deployed Sao Paulo TGW first with -target, got its ID, updated tfvars
+Multi-region deployments have dependency ordering challenges
+Smart quotes in Terminal (dquote>)
+Copy-pasted commands used curly quotes
+Used terraform.tfvars file and typed commands manually
+Sensitive values belong in .tfvars, not terminal commands
+.DS_Store in git staging
+Mac system file got staged accidentally
+git rm --cached .DS_Store and added to .gitignore
+Always check git status before committing
+Git push rejected (fetch first)
+Class repo had other students commits not in local branch
+git pull upstream kamau --allow-unrelated-histories
+Always pull before pushing to shared repos
+vim opened for merge message
+Git opened default editor for merge commit
+Pressed Escape then typed :wq and Enter to save and exit
+vim is the default Git editor on Mac - :wq saves and exits
+
+1. Key Concepts to Remember for SAA
+
+The Architecture in One Sentence
+Global access does not require global storage.
+
+Transit Gateway — SAA High Frequency Topic
+TGW is REGIONAL - one TGW per region
+Cross-region = TGW Peering Attachment between two TGWs
+TGW peering uses AWS private backbone - never public internet
+Each VPC attaches to its LOCAL TGW only
+TGW is transitive - A can reach C through B
+VPC Peering is NOT transitive - A-B and B-C does not allow A-C
+Use TGW when: many VPCs, compliance requirements, need centralized routing control
+Use VPC Peering when: simple 2-VPC connection, lowest cost
+
+Networking Rules
+NAT Gateway must be in a PUBLIC subnet - exam trap
+Route tables attach to SUBNETS not VPCs
+Public subnet = route to IGW. Private subnet = route to NAT
+Security Groups are STATEFUL - return traffic auto-allowed
+NACLs are STATELESS - must allow both directions explicitly
+SG rules reference CIDRs across VPCs - not SG IDs from other VPCs
+
+RDS Rules
+Always in private subnets - publicly_accessible = false
+Requires DB Subnet Group spanning at least 2 AZs
+storage_encrypted = true for APPI and HIPAA compliance
+Security Group should allow only specific CIDRs - never 0.0.0.0/0
+
+Your Interview Answer - Memorize This
+"I designed a cross-region medical system where all PHI remained in Japan to comply with APPI. Tokyo hosted the database, Sao Paulo ran stateless compute, and Transit Gateway provided a controlled data corridor. CloudFront delivered a single global URL without violating data residency."
+
+1. GitHub Status
+
+Repo
+Branch
+Location
+Status
+jayekamau-1991/class-7-armageddon-tko-group
+kamau
+Lab3/Lab3A/
+Pushed
+jdpayne68/class-7-armageddon-tko-group
+kamau
+Lab3/Lab3A/
+Pushed
+
+Files committed: tokyo/main.tf, tokyo/variables.tf, tokyo/outputs.tf, saopaulo/main.tf, saopaulo/variables.tf, saopaulo/data.tf, .gitignore
+Files protected by .gitignore: terraform.tfstate, terraform.tfstate.backup, terraform.tfvars, .terraform/, .DS_Store
+
+1. AWS Status
+
+Resource
+Region
+Status
+All Tokyo resources (20)
+ap-northeast-1
+DESTROYED - no charges
+All Sao Paulo resources (19)
+sa-east-1
+DESTROYED - no charges
+TGW Peering
+Cross-region
+DESTROYED
+
+Your AWS account is clean. No ongoing charges from Lab 3A.
+
+1. Next Steps
+
+For Lab 3B
+Your Lab3B folder is already created and waiting at Lab3/Lab3B/
+When the lab drops, you know the workflow: write code, init, plan, apply, verify, push, destroy
+
+For SAA Study
+Study TGW route tables - how to control which attachments can talk to each other
+Study VPC Endpoints - how to access AWS services privately without internet traffic
+Study Direct Connect - how enterprises connect on-premises networks to AWS
+Review Security Groups vs NACLs until you can explain the difference without notes
+Practice the interview answer out loud - aim for 60 seconds clean
+
+Lab 3A Session Complete  |  February 22, 2026  |  39 Resources Built and Destroyed  |  APPI Compliant
